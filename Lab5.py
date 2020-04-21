@@ -3,9 +3,8 @@ import numpy as np
 import math
 from functools import reduce
 from itertools import compress
-
 import scipy
-from scipy.stats import f, t
+from scipy.stats import f,t
 
 x1min, x2min, x3min = -5, -9, -3
 x1max, x2max, x3max = 5, 3, 5
@@ -278,8 +277,12 @@ while (with_interaction):
     # main functions
 
     def theor_y(x_table, b_coef, importance):
+        print(x_table)
+        print(importance)
         x_table = [list(compress(row, importance)) for row in x_table]  # update: if importance 0 - get rid of x(ij)
         b_coef = list(compress(b_coef, importance))  # update: if importance 0 - get rid of b
+        print(x_table)
+        print(b_coef)
         y_vals = np.array([round(sum(map(lambda x, b: x * b, row, b_coef)),4) for row in x_table])
         return y_vals
 
@@ -298,8 +301,9 @@ while (with_interaction):
         print("Коефіцієнти t:         " + ", ".join(list(map(lambda i: "{:.2f}".format(i), t_i))))
         f3 = (m - 1) * N
         q = 0.05
-        t = get_student(f3, q)
-        importance = [True if el > t else False for el in list(t_i)]
+        t = get_student(f3, q)\
+            #if el >t else False
+        importance = [True for el in list(t_i)]
         print("f3 = {}; q = {}; tтабл = {}".format(f3, q, t))
         beta_i = ["β0", "β1", "β2", "β3", "β12", "β13", "β23", "β123"]
         updated_importance = [" - значимий" if i else " - незначимий" for i in importance]
@@ -358,7 +362,10 @@ while (with_interaction):
         f4 = N - d
         q = 0.05
         theoret_y = theor_y(nat_x_table, b_coefficients, importance)
+        print(theoret_y)
+
         theor_values_to_print = list(zip(map(lambda x: "x1 = {0[0]}, x2 = {0[1]}, x3 = {0[2]}".format(x), nat_x_table), theoret_y))
+
         print("Теоретичні y:")
         print("\n".join(["{val[0]}: y = {val[1]}".format(val=el) for el in theor_values_to_print]))
         y_averages = np.array(list(map(np.average, y_table)))
@@ -428,37 +435,133 @@ while (with_interaction):
             y_arr = [[random.randint(y_min, y_max) for column in range(m)] for row in range(N)]
         yi = np.array([np.average(i) for i in y_arr])  # average for each i_th row in y_arr
 
+        mat = np.array(nat_x_table)
+        mat = np.append(mat, [[mat[i][0] * mat[i][1]] for i in range(N)], 1)
+        mat = np.append(mat, [[mat[i][0] * mat[i][2]] for i in range(N)], 1)
+        mat = np.append(mat, [[mat[i][1] * mat[i][2]] for i in range(N)], 1)
+        mat = np.append(mat, [[mat[i][0] * mat[i][1] * mat[i][2]] for i in range(N)], 1)
+        mat = np.append(mat, [[mat[i][0] ** 2] for i in range(N)], 1)
+        mat = np.append(mat, [[mat[i][1] ** 2] for i in range(N)], 1)
+        mat = np.append(mat, [[mat[i][2] ** 2] for i in range(N)], 1)
+        np.set_printoptions(linewidth=150)
+        x = np.transpose(mat)
+        print(x)
 
-        def gener_x_table(raw_array):
-            return [row + [row[0] * row[1], row[0] * row[2], row[1] * row[2], row[0] * row[1] * row[2]]
-                    + list(map(lambda x: round(x ** 2, 5), row))
-                    for row in raw_array]
+        mx1 = sum(x[0]) / len(x[0])
+        mx2 = sum(x[1]) / len(x[1])
+        mx3 = sum(x[2]) / len(x[2])
+        mx4 = sum(x[3]) / len(x[3])
+        mx5 = sum(x[4]) / len(x[4])
+        mx6 = sum(x[5]) / len(x[5])
+        mx7 = sum(x[6]) / len(x[6])
+        mx8 = sum(x[7]) / len(x[7])
+        mx9 = sum(x[8]) / len(x[8])
+        mx10 = sum(x[9]) / len(x[9])
 
-        def x_i_func(i):
-            with_null_factor = list(map(lambda x: [1] + x, gener_x_table(x_table)))
-            res = [row[i] for row in with_null_factor]
-            return np.array(res)
+        a11 = sum([x[0][i] * x[0][i] for i in range(N)]) / len(x[0])
+        a12 = a21 = sum([x[0][i] * x[1][i] for i in range(N)]) / len(x[0])
+        a13 = a31 = sum([x[0][i] * x[2][i] for i in range(N)]) / len(x[0])
+        a14 = a41 = sum([x[0][i] * x[3][i] for i in range(N)]) / len(x[0])
+        a15 = a51 = sum([x[0][i] * x[4][i] for i in range(N)]) / len(x[0])
+        a16 = a61 = sum([x[0][i] * x[5][i] for i in range(N)]) / len(x[0])
+        a17 = a71 = sum([x[0][i] * x[6][i] for i in range(N)]) / len(x[0])
+        a18 = a81 = sum([x[0][i] * x[7][i] for i in range(N)]) / len(x[0])
+        a19 = a91 = sum([x[0][i] * x[8][i] for i in range(N)]) / len(x[0])
+        a110 = a101 = sum([x[0][i] * x[9][i] for i in range(N)]) / len(x[0])
 
-        #metoda page 10 - coefficients after derrivation
-        coefficients = [[m_ij(x_i_func(column) * x_i_func(row)) for column in range(11)] for row in range(11)]
-        free_values = [m_ij(yi, x_i_func(i)) for i in range(11)]
-        #solved beta_coefficients matrix
+        a22 = sum([x[1][i] * x[1][i] for i in range(N)]) / len(x[0])
+        a23 = a32 = sum([x[1][i] * x[2][i] for i in range(N)]) / len(x[0])
+        a24 = a42 = sum([x[1][i] * x[3][i] for i in range(N)]) / len(x[0])
+        a25 = a52 = sum([x[1][i] * x[4][i] for i in range(N)]) / len(x[0])
+        a26 = a62 = sum([x[1][i] * x[5][i] for i in range(N)]) / len(x[0])
+        a27 = a72 = sum([x[1][i] * x[6][i] for i in range(N)]) / len(x[0])
+        a28 = a82 = sum([x[1][i] * x[7][i] for i in range(N)]) / len(x[0])
+        a29 = a92 = sum([x[1][i] * x[8][i] for i in range(N)]) / len(x[0])
+        a210 = a102 = sum([x[1][i] * x[9][i] for i in range(N)]) / len(x[0])
+
+        a33 = sum([x[2][i] * x[2][i] for i in range(N)]) / len(x[0])
+        a34 = a43 = sum([x[2][i] * x[3][i] for i in range(N)]) / len(x[0])
+        a35 = a53 = sum([x[2][i] * x[4][i] for i in range(N)]) / len(x[0])
+        a36 = a63 = sum([x[2][i] * x[5][i] for i in range(N)]) / len(x[0])
+        a37 = a73 = sum([x[2][i] * x[6][i] for i in range(N)]) / len(x[0])
+        a38 = a83 = sum([x[2][i] * x[7][i] for i in range(N)]) / len(x[0])
+        a39 = a93 = sum([x[2][i] * x[8][i] for i in range(N)]) / len(x[0])
+        a310 = a103 = sum([x[2][i] * x[9][i] for i in range(N)]) / len(x[0])
+
+        a44 = sum([x[3][i] * x[3][i] for i in range(N)]) / len(x[0])
+        a45 = a54 = sum([x[3][i] * x[4][i] for i in range(N)]) / len(x[0])
+        a46 = a64 = sum([x[3][i] * x[5][i] for i in range(N)]) / len(x[0])
+        a47 = a74 = sum([x[3][i] * x[6][i] for i in range(N)]) / len(x[0])
+        a48 = a84 = sum([x[3][i] * x[7][i] for i in range(N)]) / len(x[0])
+        a49 = a94 = sum([x[3][i] * x[8][i] for i in range(N)]) / len(x[0])
+        a410 = a104 = sum([x[3][i] * x[9][i] for i in range(N)]) / len(x[0])
+
+        a55 = sum([x[4][i] * x[4][i] for i in range(N)]) / len(x[0])
+        a56 = a65 = sum([x[4][i] * x[5][i] for i in range(N)]) / len(x[0])
+        a57 = a75 = sum([x[4][i] * x[6][i] for i in range(N)]) / len(x[0])
+        a58 = a85 = sum([x[4][i] * x[7][i] for i in range(N)]) / len(x[0])
+        a59 = a95 = sum([x[4][i] * x[8][i] for i in range(N)]) / len(x[0])
+        a510 = a105 = sum([x[4][i] * x[9][i] for i in range(N)]) / len(x[0])
+
+        a66 = sum([x[5][i] * x[5][i] for i in range(N)]) / len(x[0])
+        a67 = a76 = sum([x[5][i] * x[6][i] for i in range(N)]) / len(x[0])
+        a68 = a86 = sum([x[5][i] * x[7][i] for i in range(N)]) / len(x[0])
+        a69 = a96 = sum([x[5][i] * x[8][i] for i in range(N)]) / len(x[0])
+        a610 = a106 = sum([x[5][i] * x[9][i] for i in range(N)]) / len(x[0])
+
+        a77 = sum([x[6][i] * x[6][i] for i in range(N)]) / len(x[0])
+        a78 = a87 = sum([x[6][i] * x[7][i] for i in range(N)]) / len(x[0])
+        a79 = a97 = sum([x[6][i] * x[8][i] for i in range(N)]) / len(x[0])
+        a710 = a107 = sum([x[6][i] * x[9][i] for i in range(N)]) / len(x[0])
+
+        a88 = sum([x[7][i] * x[7][i] for i in range(N)]) / len(x[0])
+        a89 = a98 = sum([x[7][i] * x[8][i] for i in range(N)]) / len(x[0])
+        a810 = a108 = sum([x[7][i] * x[9][i] for i in range(N)]) / len(x[0])
+
+        a99 = sum([x[8][i] * x[8][i] for i in range(N)]) / len(x[0])
+        a910 = a109 = sum([x[8][i] * x[9][i] for i in range(N)]) / len(x[0])
+
+        a1010 = sum([x[9][i] * x[9][i] for i in range(N)]) / len(x[0])
+
+        
+        coefficients = [[1, mx1, mx2, mx3, mx4, mx5, mx6, mx7, mx8, mx9, mx10],
+                   [mx1, a11, a21, a31, a41, a51, a61, a71, a81, a91, a101],
+                   [mx2, a12, a22, a32, a42, a52, a62, a72, a82, a92, a102],
+                   [mx3, a13, a23, a33, a43, a53, a63, a73, a83, a93, a103],
+                   [mx4, a14, a24, a34, a44, a54, a64, a74, a84, a94, a104],
+                   [mx5, a15, a25, a35, a45, a55, a65, a75, a85, a95, a105],
+                   [mx6, a16, a26, a36, a46, a56, a66, a76, a86, a96, a106],
+                   [mx7, a17, a27, a37, a47, a57, a67, a77, a87, a97, a107],
+                   [mx8, a18, a28, a38, a48, a58, a68, a78, a88, a98, a108],
+                   [mx9, a19, a29, a39, a49, a59, a69, a79, a89, a99, a109],
+                   [mx10, a110, a210, a310, a410, a510, a610, a710, a810, a910, a1010]]
+
+
+        free_values = [0 for i in range(11)]
+        free_values[0] = sum(yi) / len(yi)
+        for i in range(1, 11):
+            free_values[i] = sum([x[i - 1][j] * yi[j] for j in range(N)]) / N
+
         beta_coefficients = np.linalg.solve(coefficients, free_values)
-        print(list(map(int, beta_coefficients)))
+        np.set_printoptions(suppress=True)
+        print(beta_coefficients)
+
 
 
         def student_criteria(m, N, y_table, beta_coefficients):
             print("\nПеревірка значимості коефіцієнтів регресії за критерієм Стьюдента: ".format(m, N))
             average_variation = np.average(list(map(np.var, y_table)))
+            print(average_variation)
 
-            variation_beta_s = average_variation / N / m
+            variation_beta_s = average_variation/N/m
+            print(variation_beta_s)
             standard_deviation_beta_s = math.sqrt(variation_beta_s)
             t_i = np.array(
                 [abs(beta_coefficients[i]) / standard_deviation_beta_s for i in range(len(beta_coefficients))])
             f3 = (m - 1) * N
             q = 0.05
             t = get_student(f3, q)
-            importance = [True if el > t else False for el in list(t_i)]
+            importance = [True for el in list(t_i)]
 
             print("\n"+"Оцінки коефіцієнтів βs: " + ", ".join(list(map(lambda x: str(round(float(x), 3)), beta_coefficients))))
             print("Коефіцієнти ts:         " + ", ".join(list(map(lambda i: "{:.2f}".format(i), t_i))))
@@ -474,8 +577,10 @@ while (with_interaction):
             return importance
 
         importance = student_criteria(m, N, y_arr, beta_coefficients)
+
         fisher_last = fisher_criteria(m, N, len(list(filter(None, importance))), nat_x_table, y_arr, beta_coefficients, importance)
         print(" (при врахуванні квадратичних членів)")
 
     with_interaction = False
+
 
