@@ -303,7 +303,7 @@ while (with_interaction):
         q = 0.05
         t = get_student(f3, q)\
             #if el >t else False
-        importance = [True for el in list(t_i)]
+        importance = [True  if el > t else False  for el in list(t_i)]
         print("f3 = {}; q = {}; tтабл = {}".format(f3, q, t))
         beta_i = ["β0", "β1", "β2", "β3", "β12", "β13", "β23", "β123"]
         updated_importance = [" - значимий" if i else " - незначимий" for i in importance]
@@ -561,7 +561,7 @@ while (with_interaction):
             f3 = (m - 1) * N
             q = 0.05
             t = get_student(f3, q)
-            importance = [True for el in list(t_i)]
+            importance = [True  if el > t else False for el in list(t_i)]
 
             print("\n"+"Оцінки коефіцієнтів βs: " + ", ".join(list(map(lambda x: str(round(float(x), 3)), beta_coefficients))))
             print("Коефіцієнти ts:         " + ", ".join(list(map(lambda i: "{:.2f}".format(i), t_i))))
