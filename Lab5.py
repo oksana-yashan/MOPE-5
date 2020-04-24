@@ -187,7 +187,7 @@ print("Ft:", Ft)
 if Fp < Ft:
     print("Рівняння регресії не адекватно оригіналу при q = 0,05",'\n\n')
     with_interaction = True
-    print("Рівняння регресії з врахуванням ефекту взаємодії")
+    print("Рівняння регресії з врахуванням ефекту взаємодії:")
 else:
     print("Рівняння регресії адекватно оригіналу при q = 0,05")
 
@@ -268,26 +268,27 @@ while (with_interaction):
     nat_x1 = np.array([norm_x_table[i][0] for i in range(8)])
     nat_x2 = np.array([norm_x_table[i][1] for i in range(8)])
     nat_x3 = np.array([norm_x_table[i][2] for i in range(8)])
+    
 
     norm_b_i = [m_ij(yi * 1), m_ij(yi * nat_x1), m_ij(yi * nat_x2), m_ij(yi * nat_x3),
                 m_ij(yi * nat_x1 * nat_x2), m_ij(yi * nat_x1 * nat_x3), m_ij(yi * nat_x2 * nat_x3),
                 m_ij(yi * nat_x1 * nat_x2 * nat_x3)]
 
 
+
     # main functions
 
+
     def theor_y(x_table, b_coef, importance):
-        print(x_table)
-        print(importance)
         x_table = [list(compress(row, importance)) for row in x_table]  # update: if importance 0 - get rid of x(ij)
         b_coef = list(compress(b_coef, importance))  # update: if importance 0 - get rid of b
-        print(x_table)
-        print(b_coef)
-        y_vals = np.array([round(sum(map(lambda x, b: x * b, row, b_coef)),4) for row in x_table])
+        print("X_table :\n", x_table)
+        print("b-coeffs :\n",b_coef)
+        y_vals = np.array([sum(map(lambda x, b: x * b, row, b_coef)) for row in x_table])
         return y_vals
 
 
-    def student_criteria(m, N, y_table, norm_x_table):
+    def student_criteria1(m, N, y_table, norm_x_table):
         print("\nЗа критерієм Стьюдента: m = {}, N = {} ".format(m, N))
         avg_variation = np.average(list(map(np.var, y_table)))  # var = mean(abs(y - y.mean())**2) in numpy
         y_avrg = np.array(list(map(np.average, y_table)))
@@ -301,9 +302,9 @@ while (with_interaction):
         print("Коефіцієнти t:         " + ", ".join(list(map(lambda i: "{:.2f}".format(i), t_i))))
         f3 = (m - 1) * N
         q = 0.05
-        t = get_student(f3, q)\
-            #if el >t else False
-        importance = [True  if el > t else False  for el in list(t_i)]
+
+        t = get_student(f3, q)
+        importance = [True if el>t else False for el in list(t_i)]
         print("f3 = {}; q = {}; tтабл = {}".format(f3, q, t))
         beta_i = ["β0", "β1", "β2", "β3", "β12", "β13", "β23", "β123"]
         updated_importance = [" - значимий" if i else " - незначимий" for i in importance]
@@ -353,7 +354,7 @@ while (with_interaction):
     print("\n".join([" ".join(map(lambda j: "{:<6}".format(j), rows_table[i])) for i in range(len(rows_table))]), "\n")
 
     norm_x_table_with_x0 = [[+1] + row for row in norm_x_table]
-    importance = student_criteria(m, N, y_arr, norm_x_table_with_x0)  # shows should each b(ij)*x(i) be in our main equation
+    importance = student_criteria1(m, N, y_arr, norm_x_table_with_x0)  # shows should each b(ij)*x(i) be in our main equation
 
 
     def fisher_criteria(m, N, d, nat_x_table, y_table, b_coefficients, importance):
@@ -379,8 +380,10 @@ while (with_interaction):
         return True if f_p < f_t else False
 
 
-    fisher_with_interaction = fisher_criteria(m, N, 1, x_table, y_arr, b_i, importance)
-    print(" (при врахуванні взаємодії)")
+    x_table_with_x0 = [[+1] + row for row in x_table]
+    print("rhgjdr",x_table_with_x0)
+    fisher_with_interaction = fisher_criteria(m, N, 1, x_table_with_x0, y_arr, b_i, importance)
+    print(" (при врахуванні взаємодії)\n\n")
 
 
 
@@ -543,12 +546,12 @@ while (with_interaction):
             free_values[i] = sum([x[i - 1][j] * yi[j] for j in range(N)]) / N
 
         beta_coefficients = np.linalg.solve(coefficients, free_values)
-        np.set_printoptions(suppress=True)
+        np.set_printoptions(suppress=True, linewidth=200)
         print(beta_coefficients)
 
 
 
-        def student_criteria(m, N, y_table, beta_coefficients):
+        def student_criteria2(m, N, y_table, beta_coefficients):
             print("\nПеревірка значимості коефіцієнтів регресії за критерієм Стьюдента: ".format(m, N))
             average_variation = np.average(list(map(np.var, y_table)))
             print(average_variation)
@@ -556,12 +559,12 @@ while (with_interaction):
             variation_beta_s = average_variation/N/m
             print(variation_beta_s)
             standard_deviation_beta_s = math.sqrt(variation_beta_s)
-            t_i = np.array(
-                [abs(beta_coefficients[i]) / standard_deviation_beta_s for i in range(len(beta_coefficients))])
+            t_i = np.array([(abs(beta_coefficients[i])/standard_deviation_beta_s) for i in range(len(beta_coefficients))])
             f3 = (m - 1) * N
             q = 0.05
+
             t = get_student(f3, q)
-            importance = [True  if el > t else False for el in list(t_i)]
+            importance = [True if el>t else False for el in list(t_i)]
 
             print("\n"+"Оцінки коефіцієнтів βs: " + ", ".join(list(map(lambda x: str(round(float(x), 3)), beta_coefficients))))
             print("Коефіцієнти ts:         " + ", ".join(list(map(lambda i: "{:.2f}".format(i), t_i))))
@@ -576,9 +579,10 @@ while (with_interaction):
             print("Рівняння регресії без незначимих членів: y = " + equation)
             return importance
 
-        importance = student_criteria(m, N, y_arr, beta_coefficients)
+        importance = student_criteria2(m, N, y_arr, beta_coefficients)
 
-        fisher_last = fisher_criteria(m, N, len(list(filter(None, importance))), nat_x_table, y_arr, beta_coefficients, importance)
+        nat_x_table_x0 = [[+1] + row for row in nat_x_table]
+        fisher_last = fisher_criteria(m, N, len(list(filter(None, importance))), nat_x_table_x0, y_arr, beta_coefficients, importance)
         print(" (при врахуванні квадратичних членів)")
 
     with_interaction = False
